@@ -21,7 +21,7 @@ warnings.filterwarnings("ignore")
 # --- edit this to your iSpec installation (or export ISPEC_DIR in the shell) ---
 ISPEC_DIR = os.environ.get('ISPEC_DIR', '/Users/wangxianyu/Program/Github/iSpec_v20230804')
 if not os.path.exists(ISPEC_DIR): # /content/iSpec_v20230804
-    ISPEC_DIR = os.environ.get('ISPEC_DIR', '/Users/wangxianyu/Program/Github/iSpec_v20230804')
+    ISPEC_DIR = os.environ.get('ISPEC_DIR', '/content/iSpec_v20230804')
 
 helper.set_ispec_dir(ISPEC_DIR)
 
