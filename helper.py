@@ -170,6 +170,27 @@ def set_ispec_dir(path):
     ISPEC_DIR = path
 
 
+def resolve_ispec_dir(extra_candidates=()):
+    """Locate the iSpec install and register it. Order: $ISPEC_DIR, any
+    extra_candidates, then a few common locations (Colab /content, home, this
+    machine). Registers it via set_ispec_dir AND exports $ISPEC_DIR so that
+    child processes (e.g. os.system('python get_coadded_spectra.py')) inherit it.
+    Returns the path; raises if none exist.
+    """
+    candidates = ([os.environ.get('ISPEC_DIR', '')] + list(extra_candidates) +
+                  ['/content/iSpec_v20230804',
+                   os.path.expanduser('~/iSpec_v20230804'),
+                   '/Users/wangxianyu/Program/Github/iSpec_v20230804'])
+    for c in candidates:
+        if c and os.path.isdir(c):
+            set_ispec_dir(c)
+            os.environ['ISPEC_DIR'] = c
+            return c
+    raise RuntimeError(
+        'iSpec install not found. Set the ISPEC_DIR environment variable, or pass '
+        'helper.resolve_ispec_dir(extra_candidates=["/path/to/iSpec_v20230804"]).')
+
+
 def _ispec_path(rel):
     """Full path to an iSpec input file, resolved from the current ISPEC_DIR."""
     return os.path.join(ISPEC_DIR, rel)

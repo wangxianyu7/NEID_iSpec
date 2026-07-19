@@ -18,12 +18,10 @@ import helper
 import warnings
 warnings.filterwarnings("ignore")
 
-# --- edit this to your iSpec installation (or export ISPEC_DIR in the shell) ---
-ISPEC_DIR = os.environ.get('ISPEC_DIR', '/Users/wangxianyu/Program/Github/iSpec_v20230804')
-if not os.path.exists(ISPEC_DIR): # /content/iSpec_v20230804
-    ISPEC_DIR = os.environ.get('ISPEC_DIR', '/content/iSpec_v20230804')
-
-helper.set_ispec_dir(ISPEC_DIR)
+# iSpec install: $ISPEC_DIR, else common locations. Exports $ISPEC_DIR so the
+# get_coadded_spectra.py subprocess below inherits it. Add your path if needed:
+#   helper.resolve_ispec_dir(extra_candidates=['/path/to/iSpec_v20230804'])
+ISPEC_DIR = helper.resolve_ispec_dir()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
@@ -47,10 +45,11 @@ RESOLUTION = 110000
 
 if __name__ == '__main__':
     ispec = helper._ispec()
-    # if coadded file doesn't exist, run get_coadded_spectra.py first
+    # if coadded file doesn't exist, run get_coadded_spectra.py first. Use the same
+    # interpreter + absolute path (cwd-independent); it inherits $ISPEC_DIR.
     if not os.path.exists(COADD):
-        # print(f'Coadded spectrum {COADD} not found; run get_coadded_spectra.py first.')
-        os.system('python get_coadded_spectra.py')
+        import sys
+        os.system(f'{sys.executable} {os.path.join(BASE_DIR, "get_coadded_spectra.py")}')
     spec = ispec.read_spectrum(COADD)
     print(f'Loaded {COADD}: {len(spec)} pixels, '
           f'{spec["waveobs"].min():.1f}-{spec["waveobs"].max():.1f} nm')

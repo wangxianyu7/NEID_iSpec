@@ -26,10 +26,10 @@ import helper
 from helper import (deblaze_neid, to_rest_frame, clean_and_normalize,
                     coadd_spectra)
 
-# --- edit this to your iSpec installation (or export ISPEC_DIR in the shell) ---
-ISPEC_DIR = os.environ.get('ISPEC_DIR', '/Users/wangxianyu/Program/Github/iSpec_v20230804')
-if not os.path.exists(ISPEC_DIR): # /content/iSpec_v20230804
-    ISPEC_DIR = os.environ.get('ISPEC_DIR', '/content/iSpec_v20230804')
+# iSpec install: $ISPEC_DIR, else common locations (inherited from run_modeling.py
+# when launched as a subprocess). Add your path if needed:
+#   helper.resolve_ispec_dir(extra_candidates=['/path/to/iSpec_v20230804'])
+ISPEC_DIR = helper.resolve_ispec_dir()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
