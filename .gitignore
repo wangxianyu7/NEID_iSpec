@@ -1,0 +1,11 @@
+.DS_Store
+__pycache__/
+*.pyc
+*.log
+
+# generated outputs (figures, coadd, best-fit model, html, param table)
+output/
+data/coadd_norm.txt
+
+# note: data/neidL2_*.fits are SLIMMED example files (only the 4 extensions the
+# pipeline uses: SCIFLUX/SCIVAR/SCIWAVE/SCIBLAZE). Full L2 -> NEID archive.
