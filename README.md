@@ -2,7 +2,7 @@
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/wangxianyu7/NEID_iSpec) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1TqQ3rogcBWYfo9g498yV6lIOolczGBcM?usp=sharing)
 
-Measure stellar parameters (Teff, log g, [Fe/H], v_mic, v sin i) from coadded NEID L2 spectra by synthetic spectral fitting with [iSpec](https://www.blancocuaresma.com/s/iSpec). Two files: `helper.py` (all functions) and `run_modeling.py` (entry point + config).
+Measure stellar parameters (Teff, log g, [Fe/H], v_mic, v sin i) from coadded NEID L2 spectra by synthetic spectral fitting with [iSpec](https://www.blancocuaresma.com/s/iSpec) (see Section 4.1 of our [single-star warm Jupiter alignment tendency paper](https://ui.adsabs.harvard.edu/abs/2024ApJ...973L..21W/abstract)). Two files: `helper.py` (all functions) and `run_modeling.py` (entry point + config).
 
 ##### How to use it
 
@@ -54,3 +54,65 @@ flowchart TD
 
 - `data/neidL2_*.fits` here are **slimmed example files** — only the 4 extensions the pipeline uses (`SCIFLUX`/`SCIVAR`/`SCIWAVE`/`SCIBLAZE`). Full L2 files are on the NEID archive.
 
+##### Citations
+If you use this code, citing the works below is appreciated.
+
+```
+%This pipeline; see Section 4.1
+@ARTICLE{WangXY2024WJAlignment,
+       author = {{Wang}, Xian-Yu and {Rice}, Malena and {Wang}, Songhu and {Kanodia}, Shubham and {Dai}, Fei and {Logsdon}, Sarah E. and {Schweiker}, Heidi and {Teske}, Johanna K. and {Butler}, R. Paul and {Crane}, Jeffrey D. and {Shectman}, Stephen and {Quinn}, Samuel N. and {Kostov}, Veselin and {Osborn}, Hugh P. and {Goeke}, Robert F. and {Eastman}, Jason D. and {Shporer}, Avi and {Rapetti}, David and {Collins}, Karen A. and {Watkins}, Cristilyn N. and {Relles}, Howard M. and {Ricker}, George R. and {Seager}, Sara and {Winn}, Joshua N. and {Jenkins}, Jon M.},
+        title = "{Single-star Warm-Jupiter Systems Tend to Be Aligned, Even around Hot Stellar Hosts: No T $_{eff}$─{\ensuremath{\lambda}} Dependency}",
+      journal = {\apjl},
+     keywords = {Planetary alignment, Exoplanet dynamics, Exoplanet evolution, Star-planet interactions, Exoplanets, Planetary theory, Exoplanet systems, Exoplanet astronomy, Planetary dynamics, Hot Jupiters, 1243, 490, 491, 2177, 498, 1258, 484, 486, 2173, 753, Astrophysics - Earth and Planetary Astrophysics},
+         year = 2024,
+        month = sep,
+       volume = {973},
+       number = {1},
+          eid = {L21},
+        pages = {L21},
+          doi = {10.3847/2041-8213/ad7469},
+archivePrefix = {arXiv},
+       eprint = {2408.10038},
+ primaryClass = {astro-ph.EP},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2024ApJ...973L..21W},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+
+%iSpec
+@ARTICLE{Blanco2014,
+       author = {{Blanco-Cuaresma}, S. and {Soubiran}, C. and {Heiter}, U. and {Jofr{\'e}}, P.},
+        title = "{Determining stellar atmospheric parameters and chemical abundances of FGK stars with iSpec}",
+      journal = {\aap},
+     keywords = {stars: atmospheres, stars: abundances, methods: data analysis, Astrophysics - Instrumentation and Methods for Astrophysics, Astrophysics - Solar and Stellar Astrophysics},
+         year = 2014,
+        month = sep,
+       volume = {569},
+          eid = {A111},
+        pages = {A111},
+          doi = {10.1051/0004-6361/201423945},
+archivePrefix = {arXiv},
+       eprint = {1407.2608},
+ primaryClass = {astro-ph.IM},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2014A&A...569A.111B},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+%iSpec
+@ARTICLE{Blanco2019,
+       author = {{Blanco-Cuaresma}, Sergi},
+        title = "{Modern stellar spectroscopy caveats}",
+      journal = {\mnras},
+     keywords = {techniques: spectroscopic, stars: abundances, stars: atmospheres, stars: fundamental parameters, Astrophysics - Solar and Stellar Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics},
+         year = 2019,
+        month = jun,
+       volume = {486},
+       number = {2},
+        pages = {2075-2101},
+          doi = {10.1093/mnras/stz549},
+archivePrefix = {arXiv},
+       eprint = {1902.09558},
+ primaryClass = {astro-ph.SR},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2019MNRAS.486.2075B},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+
+```
