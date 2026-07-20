@@ -335,6 +335,125 @@ def coadd_spectra(norm_specs, wave_base=480.0, wave_top=680.0, wave_step=0.001,
     return co
 
 
+def build_coadd(data_dir, out_dir, continuum='template', qteff=None,
+                template_logg=4.0, template_mh=0.0, resolution=110000,
+                diagnostics=True, verbose=True):
+    """Full pre-processing pipeline for all data/neidL2_*.fits in `data_dir`:
+    deblaze + stitch -> rest frame -> cosmic removal + continuum normalization ->
+    inverse-variance coadd. Writes out_dir/coadd_norm.txt and, if `diagnostics`,
+    deblaze/normalize/coadd check PNGs. Returns the coadded iSpec spectrum.
+
+    continuum='template' builds a FIXED continuum template a priori from the
+    header Teff; pass `qteff` to use a specific value (else read from the first
+    file's QTEFF). continuum='splines' skips the template (model-independent).
+    """
+    import glob
+    ispec = _ispec()
+    os.makedirs(out_dir, exist_ok=True)
+    files = sorted(glob.glob(os.path.join(data_dir, 'neidL2_*.fits')))
+    if not files:
+        raise SystemExit(f'No NEID L2 files in {data_dir}')
+    if verbose:
+        print(f'{len(files)} NEID L2 files:')
+        for f in files:
+            print('  ', os.path.basename(f), '->', fits.getheader(f)['OBJECT'])
+
+    # a-priori continuum template from the header Teff (not from any fit)
+    template = None
+    if continuum == 'template':
+        if qteff is None:
+            qteff = float(fits.getheader(files[0])['QTEFF'])
+        if verbose:
+            print(f'building continuum template at QTEFF={qteff:.0f} K, '
+                  f'logg={template_logg}, [M/H]={template_mh} ...')
+        template = make_continuum_template(qteff, logg=template_logg, MH=template_mh,
+                                           resolution=resolution)
+
+    # deblaze -> rest frame -> clean + normalize, per exposure
+    norm_specs, orders0 = [], None
+    for f in files:
+        name = os.path.basename(f)
+        if verbose:
+            print(name)
+        orders = deblaze_neid(f)
+        if orders0 is None:
+            orders0 = orders                      # keep first for the deblaze plot
+        w, fl, er, info = to_rest_frame(orders, f, verbose=verbose)
+        nspec, ncos = clean_and_normalize(w, fl, er, resolution=resolution,
+                                          template=template, verbose=verbose)
+        norm_specs.append((nspec, name))
+
+    coadd = coadd_spectra(norm_specs, verbose=verbose)
+    out = os.path.join(out_dir, 'coadd_norm.txt')
+    ispec.write_spectrum(coadd, out)
+    if verbose:
+        print(f'saved {out}')
+    if diagnostics:
+        _coadd_diagnostics(orders0, norm_specs, coadd, out_dir)
+    return coadd
+
+
+def _coadd_diagnostics(orders, norm_specs, coadd, out_dir, n_junction=60):
+    """Save deblaze / normalize / coadd check figures to out_dir/ (matplotlib Agg)."""
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    # 1) deblazed orders + one clean order junction
+    fig, ax = plt.subplots(2, 1, figsize=(13, 6))
+    for od in orders:
+        ax[0].plot(od['wave_nm'], od['flux'], lw=0.4)
+    ax[0].set_title('Deblazed + edge-trimmed orders (all)')
+    ax[0].set_ylabel('flux / blaze')
+    oa = [o for o in orders if o['order'] == n_junction][0]
+    ob = [o for o in orders if o['order'] == n_junction + 1][0]
+    wc = 0.5 * (oa['wave_nm'].max() + ob['wave_nm'].min())
+    w0, w1 = wc - 1.5, wc + 1.5
+    for od in orders:
+        m = (od['wave_nm'] > w0) & (od['wave_nm'] < w1)
+        if m.sum() > 10:
+            ax[1].plot(od['wave_nm'][m], od['flux'][m], lw=0.7, label=f'ord {od["order"]}')
+    ax[1].set_xlim(w0, w1)
+    ax[1].set_xlabel('wavelength [nm, air]'); ax[1].set_ylabel('flux / blaze')
+    ax[1].set_title(f'Order junction {n_junction}/{n_junction+1} (~{wc:.1f} nm)')
+    ax[1].legend(fontsize=8, ncol=4)
+    plt.tight_layout()
+    plt.savefig(os.path.join(out_dir, 'deblaze_check.png'), dpi=120, bbox_inches='tight')
+    plt.close(fig)
+
+    # 2) normalized exposures (full + Mg b zoom)
+    fig, ax = plt.subplots(2, 1, figsize=(13, 6))
+    for nspec, name in norm_specs:
+        ax[0].plot(nspec['waveobs'], nspec['flux'], lw=0.4, label=name)
+    ax[0].axhline(1, color='k', lw=0.6, ls='--'); ax[0].set_ylim(0, 1.2)
+    ax[0].set_ylabel('normalized flux'); ax[0].set_title('Normalized (full range)')
+    ax[0].legend(fontsize=8)
+    for nspec, name in norm_specs:
+        m = (nspec['waveobs'] > 516) & (nspec['waveobs'] < 519)
+        ax[1].plot(nspec['waveobs'][m], nspec['flux'][m], lw=0.7, label=name)
+    ax[1].axhline(1, color='k', lw=0.6, ls='--'); ax[1].set_ylim(0, 1.15)
+    ax[1].set_xlabel('wavelength [nm, air, rest]'); ax[1].set_ylabel('normalized flux')
+    ax[1].set_title('Zoom: Mg b (516-519 nm)'); ax[1].legend(fontsize=8)
+    plt.tight_layout()
+    plt.savefig(os.path.join(out_dir, 'normalize_check.png'), dpi=120, bbox_inches='tight')
+    plt.close(fig)
+
+    # 3) coadd vs individual (Mg b)
+    fig, ax = plt.subplots(figsize=(13, 4))
+    for nspec, name in norm_specs:
+        m = (nspec['waveobs'] > 516) & (nspec['waveobs'] < 519)
+        ax.plot(nspec['waveobs'][m], nspec['flux'][m], lw=0.5, alpha=0.5, label=name)
+    m = (coadd['waveobs'] > 516) & (coadd['waveobs'] < 519)
+    ax.plot(coadd['waveobs'][m], coadd['flux'][m], 'k-', lw=0.8, label='coadd')
+    ax.axhline(1, color='gray', lw=0.5, ls='--'); ax.set_ylim(0, 1.15)
+    ax.set_xlabel('wavelength [nm, air, rest]'); ax.set_ylabel('normalized flux')
+    ax.set_title('Coadd vs individual exposures (Mg b)'); ax.legend(fontsize=8)
+    plt.tight_layout()
+    plt.savefig(os.path.join(out_dir, 'coadd_check.png'), dpi=120, bbox_inches='tight')
+    plt.close(fig)
+    print('saved diagnostic figures to', out_dir)
+
+
 # --- radiative-transfer setup (SPECTRUM + MARCS + GES v6, following the paper) ---
 RT_CODE = 'spectrum'                                                   # Gray 1994
 SEGMENTS_FILE = os.path.join(os.path.dirname(__file__), 'segments_feh_Halpha_Hbeta_MgI.txt')

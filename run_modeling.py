@@ -45,11 +45,10 @@ RESOLUTION = 110000
 
 if __name__ == '__main__':
     ispec = helper._ispec()
-    # if coadded file doesn't exist, run get_coadded_spectra.py first. Use the same
-    # interpreter + absolute path (cwd-independent); it inherits $ISPEC_DIR.
+    # build the coadd if missing (deblaze -> rest frame -> normalize -> coadd);
+    # pass the header QTEFF so the continuum template uses it
     if not os.path.exists(COADD):
-        import sys
-        os.system(f'{sys.executable} {os.path.join(BASE_DIR, "get_coadded_spectra.py")}')
+        helper.build_coadd(DATA_DIR, OUT_DIR, qteff=QTEFF, resolution=RESOLUTION)
     spec = ispec.read_spectrum(COADD)
     print(f'Loaded {COADD}: {len(spec)} pixels, '
           f'{spec["waveobs"].min():.1f}-{spec["waveobs"].max():.1f} nm')
